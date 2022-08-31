@@ -5,26 +5,26 @@ Pascal Schmidt
 
 I participated in the R Shiny 2021 contest and published an application
 similar to the Google Analytics dashboard. For that, I used the Google
-Analytics API and the Goolgle Search Console API to pull my own data
+Analytics API and the Google Search Console API to pull my own data
 from my blog directly in to the application.
 
 The application uses the `shinyauthr` library because the dashboard can
 be adjusted for each user who has their own user name and password. On
 the first page, there are some visualizations for page views, devices
-used, etc. On the second page there is a timeseries model that tries to
+used, etc. On the second page there is a time-series model that tries to
 predict my page views for two months in advance.
 
 I have been learning R Shiny seriously for a year now and tried to put
 in as much knowledge as possible from my learning over the past year.
 Some features of the app include:
 
--   JavaScript annd jQuery code + some CSS and Boostrap classes for
+-   JavaScript and jQuery code + some CSS and Bootstrap classes for
     better user experience
 -   The Shiny router package from Appsilon to make the app appear like a
     multipage application.
 -   A mongoDB database to save user data and individualize the
     dashboard.
--   Modularization of code to create a maintanable application that is
+-   Modularization of code to create a maintainable application that is
     easy to extend.
 -   Custom functions for better unit testing.
 -   R Shiny testing.
