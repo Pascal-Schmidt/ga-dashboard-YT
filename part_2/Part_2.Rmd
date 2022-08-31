@@ -1,0 +1,382 @@
+---
+title: "Part 2"
+author: "Pascal Schmidt"
+date: "03/07/2021"
+output: github_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Welcome to the second part of the Shiny application. Here we will be adding the functionality of adding a visualization back to the dashboard after clicking the action link.
+
+Again, we need some JS + jQuery
+
+```{js eval=F}
+// add plot and remove action link
+$(document).on("click", ".added_btn", function() {
+
+  var clicked_id = $(this).attr('id');
+  var p = $("#" + clicked_id).parent().text();
+  var p = $.trim(p);
+  Shiny.setInputValue('header', p, {priority: 'event'});
+  $(".added_" + clicked_id).remove();
+
+  if($("[class^='class_']").length) {
+      last_panel = $("[class^='class_']").last().attr("class");
+      Shiny.setInputValue('last_panel', last_panel, {priority: 'event'});
+  } else {
+      Shiny.setInputValue('last_panel', '#placeholder', {priority: 'event'});
+  }
+
+  Shiny.setInputValue('add_btn_clicked', clicked_id, {priority: 'event'});
+
+})
+```
+
+When a user clicks the `added_btn` class of the action link, we get the id of that action link and the action link text. We then send the action link text to R with `Shiny.setInputValue('header', p, {priority: 'event'})` and remove the action link with `$(".added_" + clicked_id).remove()`. 
+
+We then check if there is already a visualization in the dashboard. If there is, we get the class from the last visualization on the page and then send either that particular class or `#placeholder` to R. We also send the action link id to R. 
+
+After we sent these 3 things to R, we will be using the Shiny server to create a visualization with plotly. However, instead of using the `renderUI` function, we will be using the `insertUI` function which will be more efficient.
+
+## Visualization Helper Function
+
+Before we are going into the server side of things, we will be creating a helper function for the visualizations. We will basically copy paste a div from the UI and then add parameters to the function. 
+
+We need to make the class in the first div generic, as well as the header, the button id, the button class, and some other parameters that we need to change later. The function that can do that is shown below. 
+
+```{r eval=F}
+google_analytics_viz <- function(title = NULL, viz = NULL, btn_id, df = NULL,
+                                 class_all, class_specific, color) {
+  shiny::tagList(
+    div(
+      class = class_specific,
+      div(
+        class = "col-md-6",
+        div(
+          class = "panel panel-default",
+          div(
+            class = "panel-heading clearfix",
+            tags$h2(title, class = "panel-title pull-left"),
+            div(
+              class = "pull-right",
+              shiny::actionButton(
+                inputId = btn_id,
+                label = "",
+                class = stringr::str_glue("btn-{color} {class_all}"),
+                icon = shiny::icon("minus")
+              )
+            )
+          ),
+          div(
+            class = "panel-body",
+            plotly::plot_ly(mtcars, x = ~mpg, y = ~wt)
+          )
+        )
+      )
+    )
+  )
+}
+
+```
+
+
+## The Shiny Server Side
+
+On the server side, we will have an observer that gets triggered when one clicks the action link. We then call the `google_analytics_viz` viz function with the suitable parameters. We then determine if there is already a visualization or not. If not, the visualization will be added after the `#placeholder` id that we have yet to implement in the UI, and if there is a visualization already we are going to insert that visualization after the last visualization on the page. 
+
+```{r eval=F}
+server <- function(input, output) {
+
+    # run when we add visualization
+    shiny::observeEvent(input$add_btn_clicked, {
+
+        # clicked id
+        panel <- input$add_btn_clicked
+
+        panel_plot_item <-
+            google_analytics_viz(
+                title = input$header,
+                viz = NULL,
+                df = NULL,
+                btn_id = panel,
+                class_all = "delete",
+                class_specific = paste0("class_", panel),
+                color = "danger"
+            )
+
+        css_selector <- ifelse(input$last_panel == "#placeholder",
+                               "#placeholder",
+                               paste0(".", input$last_panel)
+        )
+
+        shiny::insertUI(
+            selector = css_selector,
+            "afterEnd",
+            ui = panel_plot_item
+        )
+    })
+
+}
+```
+
+## The UI Side
+
+For the UI side, we are just going to insert `div(id = "placeholder")` to make sure that a visualization is drawn when there is none yet available. 
+
+```{r eval=F}
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+
+    br(),
+    br(),
+
+    div(id = "placeholder"),
+    shiny::tagList(
+
+        # first viz
+        div(
+            class = "class_a",
+            div(
+                class = "col-md-6",
+                div(
+                    class = "panel panel-default",
+                    div(
+                        class = "panel-heading clearfix",
+                        tags$h2("Visualization 1", class = "pull-left panel-title"),
+                        div(
+                            class = "pull-right",
+                            shiny::actionButton(
+                                inputId = "a",
+                                label = "",
+                                class = "btn-danger delete",
+                                icon = shiny::icon("minus")
+                            )
+                        )
+                    ),
+                    div(
+                        class = "panel-body",
+                        plotly::plot_ly(mtcars, x = ~mpg, y = ~wt)
+                    )
+                )
+            )
+        ),
+
+        # second viz
+        div(
+            class = "class_b",
+            div(
+                class = "col-md-6",
+                div(
+                    class = "panel panel-default",
+                    div(
+                        class = "panel-heading clearfix",
+                        tags$h2("Visualization 2", class = "pull-left panel-title"),
+                        div(
+                            class = "pull-right",
+                            shiny::actionButton(
+                                inputId = "b",
+                                label = "",
+                                class = "btn-danger delete",
+                                icon = shiny::icon("minus")
+                            )
+                        )
+                    ),
+                    div(
+                        class = "panel-body",
+                        plotly::plot_ly(mtcars, x = ~mpg, y = ~wt)
+                    )
+                )
+            )
+        ),
+
+        # third viz
+        div(
+            class = "class_c",
+            div(
+                class = "col-md-6",
+                div(
+                    class = "panel panel-default",
+                    div(
+                        class = "panel-heading clearfix",
+                        tags$h2("Visualization 3", class = "pull-left panel-title"),
+                        div(
+                            class = "pull-right",
+                            shiny::actionButton(
+                                inputId = "c",
+                                label = "",
+                                class = "btn-danger delete",
+                                icon = shiny::icon("minus")
+                            )
+                        )
+                    ),
+                    div(
+                        class = "panel-body",
+                        plotly::plot_ly(mtcars, x = ~mpg, y = ~wt)
+                    )
+                )
+            )
+        )
+
+
+    ),
+
+    shiny::includeScript(here::here("GA_dashboard/part_2/www/scripts.js"))
+
+)
+```
+
+## The Latest Version
+
+The lastest version in part 2 looks like this:
+
+```{r eval=F}
+library(shiny)
+library(tidyverse)
+library(plotly)
+
+list.files(here::here("GA_dashboard/part_2/R")) %>%
+    here::here("GA_dashboard/part_2/R", .) %>%
+    purrr::walk(~source(.))
+
+# Define UI for application that draws a histogram
+ui <- fluidPage(
+
+    br(),
+    br(),
+
+    div(id = "placeholder"),
+    shiny::tagList(
+
+        # first viz
+        div(
+            class = "class_a",
+            div(
+                class = "col-md-6",
+                div(
+                    class = "panel panel-default",
+                    div(
+                        class = "panel-heading clearfix",
+                        tags$h2("Visualization 1", class = "pull-left panel-title"),
+                        div(
+                            class = "pull-right",
+                            shiny::actionButton(
+                                inputId = "a",
+                                label = "",
+                                class = "btn-danger delete",
+                                icon = shiny::icon("minus")
+                            )
+                        )
+                    ),
+                    div(
+                        class = "panel-body",
+                        plotly::plot_ly(mtcars, x = ~mpg, y = ~wt)
+                    )
+                )
+            )
+        ),
+
+        # second viz
+        div(
+            class = "class_b",
+            div(
+                class = "col-md-6",
+                div(
+                    class = "panel panel-default",
+                    div(
+                        class = "panel-heading clearfix",
+                        tags$h2("Visualization 2", class = "pull-left panel-title"),
+                        div(
+                            class = "pull-right",
+                            shiny::actionButton(
+                                inputId = "b",
+                                label = "",
+                                class = "btn-danger delete",
+                                icon = shiny::icon("minus")
+                            )
+                        )
+                    ),
+                    div(
+                        class = "panel-body",
+                        plotly::plot_ly(mtcars, x = ~mpg, y = ~wt)
+                    )
+                )
+            )
+        ),
+
+        # third viz
+        div(
+            class = "class_c",
+            div(
+                class = "col-md-6",
+                div(
+                    class = "panel panel-default",
+                    div(
+                        class = "panel-heading clearfix",
+                        tags$h2("Visualization 3", class = "pull-left panel-title"),
+                        div(
+                            class = "pull-right",
+                            shiny::actionButton(
+                                inputId = "c",
+                                label = "",
+                                class = "btn-danger delete",
+                                icon = shiny::icon("minus")
+                            )
+                        )
+                    ),
+                    div(
+                        class = "panel-body",
+                        plotly::plot_ly(mtcars, x = ~mpg, y = ~wt)
+                    )
+                )
+            )
+        )
+
+
+    ),
+
+    shiny::includeScript(here::here("GA_dashboard/part_2/www/scripts.js"))
+
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+
+    # run when we add visualization
+    shiny::observeEvent(input$add_btn_clicked, {
+
+        # clicked id
+        panel <- input$add_btn_clicked
+
+        panel_plot_item <-
+            google_analytics_viz(
+                title = input$header,
+                viz = NULL,
+                df = NULL,
+                btn_id = panel,
+                class_all = "delete",
+                class_specific = paste0("class_", panel),
+                color = "danger"
+            )
+
+        css_selector <- ifelse(input$last_panel == "#placeholder",
+                               "#placeholder",
+                               paste0(".", input$last_panel)
+        )
+
+        shiny::insertUI(
+            selector = css_selector,
+            "afterEnd",
+            ui = panel_plot_item
+        )
+    })
+
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```
+
