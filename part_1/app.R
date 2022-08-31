@@ -98,7 +98,7 @@ ui <- fluidPage(
 
     ),
 
-    shiny::includeScript(here::here("GA_dashboard/part_1/www/scripts.js"))
+    shiny::includeScript(here::here("part_1/www/scripts.js"))
 
 )
 
