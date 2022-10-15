@@ -1,0 +1,51 @@
+.nav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  top: 0;
+  right: 0;
+  background-color: black;
+  opacity: 0.85;
+  z-index: 100000;
+  transition: 1s;
+  overflow-x: hidden;
+  padding-top: 60px;
+}
+
+.nav #close {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  margin-left: 50px;
+  font-size: 30px;
+}
+
+/*
+#entire-sidebar {
+  margin-top: -50px;
+  transition: margin-left 1s;
+  overflow: hidden;
+  width: 100%;
+}
+*/
+
+/* action links and escape sign style */
+.nav a {
+  display: block;
+  padding: 10px;
+  font-size: 20px;
+  color: #ccc;
+  text-decoration: none;
+}
+
+/* action links and escape sign style */
+.nav a:hover {
+  color: #fff;
+  transition: 0.25s;
+}
+
+/* burger style */
+#slide a {
+  font-size: 36px;
+  color: #ccc;
+}
