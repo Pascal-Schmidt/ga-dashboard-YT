@@ -1,0 +1,51 @@
+.nav {
+  position: fixed;
+  height: 100%;
+  background-color: black;
+  opacity: 0.85;
+  top: 0;
+  width: 0;
+  right: 0;
+  z-index: 100;
+  transition: 1s;
+  overflow-x: hidden;
+}
+
+#open {
+  font-size: 36px;
+  color: #ccc;
+}
+
+#get_data-show_dates {
+  font-size: 36px;
+  color: #ccc;
+}
+
+#open_date_range {
+  font-size: 36px;
+  color: #ccc;
+}
+
+#close {
+  font-size: 36px;
+  color: #ccc;
+  position: absolute;
+  margin-left: 50px;
+  top: 0;
+  right: 25px;
+}
+
+/* action links and escape sign style */
+.nav a {
+  display: block;
+  padding: 10px;
+  font-size: 20px;
+  color: #ccc;
+  text-decoration: none;
+}
+
+/* action links and escape sign style */
+.nav a:hover {
+  color: #fff;
+  transition: 0.25s;
+}
